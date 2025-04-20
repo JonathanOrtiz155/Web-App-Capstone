@@ -1,5 +1,17 @@
 .App {
-  text-align: center;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+.main-content {
+  display: flex;
+
+}
+
+.page-content {
+  flex: 1;
+  padding: 20px;
 }
 
 .App-logo {
@@ -25,7 +37,7 @@
 }
 
 .App-link {
-  color: #61dafb;
+  color: #ec1a1a;
 }
 
 @keyframes App-logo-spin {

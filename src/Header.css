@@ -1,0 +1,30 @@
+/* File: src/Header.css */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: #000000; /* Dark gray */
+    color: #fff; /* White text */
+  }
+  
+  .logo-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+    .csuci-logo {
+        height: 200px;
+    }
+
+    .header-title {
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+  .datetime-section p {
+    margin: 0;
+    text-align: right;
+  }
+  
