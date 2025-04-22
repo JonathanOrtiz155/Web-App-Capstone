@@ -24,7 +24,7 @@ const computers = [
 ];
 
 // Use the same ngrok URL you’re tunneling port 5000 through:
-const STATUS_URL = "https://6de1-2603-8000-cf01-26cc-437e-2c26-d244-622c.ngrok-free.app/api/status";
+const STATUS_URL = "https://dceb-2603-8000-cf01-26cc-437e-2c26-d244-622c.ngrok-free.app/api/status";
 
 export default function MonitoringDashboard() {
   const [pcStatus, setPcStatus] = useState(
