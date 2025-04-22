@@ -1,9 +1,15 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "build")));
 
 // List of all 15 PC identifiers
 const computers = [
@@ -31,6 +37,8 @@ const lastSeen = {};
 // Receive heartbeat
 app.post("/api/heartbeat", (req, res) => {
   const { pcId } = req.body;
+  console.log("Received heartbeat from", pcId);
+  // Validate pcId
   if (!pcId) {
     return res.status(400).json({ error: "Missing pcId" });
   }
@@ -50,6 +58,10 @@ app.get("/api/status", (req, res) => {
   }
 
   res.json(status);
+});
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
 const PORT = process.env.PORT || 5000;

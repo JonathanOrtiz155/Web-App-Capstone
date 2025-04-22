@@ -3,9 +3,10 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 
-// Use the exact tunnel URL (no trailing spaces!)
-const NGROK_URL = "https://8ce9-2603-8000-cf01-26cc-437e-2c26-d244-622c.ngrok-free.app";
-console.log("STATUS_URL is:", NGROK_URL + "/api/status");
+// Replace this with your ngrok HTTPS forwarding URL exactly, no trailing spaces:
+const STATUS_URL = "/api/status";
+
+console.log("STATUS_URL is:", STATUS_URL);
 
 const computers = [
   "N-6-20437-20A",
@@ -25,7 +26,6 @@ const computers = [
   "LX-14-18464-23",
   "LX-15-18460-23",
 ];
-const STATUS_URL = NGROK_URL + "/api/status";
 
 export default function MonitoringDashboard() {
   const [pcStatus, setPcStatus] = useState(
@@ -37,11 +37,12 @@ export default function MonitoringDashboard() {
       console.log("Fetching", STATUS_URL);
       try {
         const res = await fetch(STATUS_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         console.log("fetched status:", data);
         setPcStatus(data);
       } catch (err) {
-        console.error("Failed to fetch PC status", err);
+        console.error("Failed to fetch PC status:", err);
       }
     }
     getStatus();
@@ -60,11 +61,7 @@ export default function MonitoringDashboard() {
           )}
           <CardContent>
             <h2 className="text-lg font-semibold">{pc}</h2>
-            <p
-              className={`text-sm ${
-                pcStatus[pc] ? "text-green-500" : "text-red-500"
-              }`}
-            >
+            <p className={`text-sm ${pcStatus[pc] ? "text-green-500" : "text-red-500"}`}>
               {pcStatus[pc] ? "Online" : "Offline"}
             </p>
           </CardContent>
