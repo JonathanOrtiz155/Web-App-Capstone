@@ -5,7 +5,7 @@ import fetch from "node-fetch";
 const PC_ID = "N-6-20437-20A";  
 
 // If you used ngrok, replace with your tunnel URL:
-const BACKEND_URL = "https://2cd1-2603-8000-cf01-26cc-437e-2c26-d244-622c.ngrok-free.app/api/heartbeat";
+const BACKEND_URL = "https://98fa-2603-8000-cf01-26cc-437e-2c26-d244-622c.ngrok-free.app";
 
 async function sendHeartbeat() {
   try {
