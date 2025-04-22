@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -9,9 +10,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "build")));
 
-// List of all 15 PC identifiers
+// Your 15 PC IDs
 const computers = [
   "N-6-20437-20A",
   "LX-01-18480-23",
@@ -28,43 +28,43 @@ const computers = [
   "LX-12-18462-23",
   "LX-13-18463-23",
   "LX-14-18464-23",
-  "LX-15-18460-23"
+  "LX-15-18460-23",
 ];
 
-// In-memory store of last heartbeat timestamps
+// In‑memory heartbeat store
 const lastSeen = {};
 
-// Receive heartbeat
+// 1) POST /api/heartbeat
 app.post("/api/heartbeat", (req, res) => {
   const { pcId } = req.body;
-  console.log("Received heartbeat from", pcId);
-  // Validate pcId
-  if (!pcId) {
-    return res.status(400).json({ error: "Missing pcId" });
-  }
+  console.log("Heartbeat received for:", pcId);
+  if (!pcId) return res.status(400).json({ error: "Missing pcId" });
   lastSeen[pcId] = Date.now();
-  return res.sendStatus(200);
+  res.sendStatus(200);
 });
 
-// Return online/offline status for every PC
+// 2) GET /api/status
 app.get("/api/status", (req, res) => {
   const now = Date.now();
   const status = {};
-
-  // A PC is "online" if its last heartbeat was within the last 3 minutes
   for (const pcId of computers) {
     const last = lastSeen[pcId] || 0;
     status[pcId] = now - last < 3 * 60 * 1000;
   }
-
   res.json(status);
 });
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "build", "index.html"));
+// 3) Serve React build folder
+const buildDir = path.join(__dirname, "build");
+app.use(express.static(buildDir));
+
+// 4) Serve index.html on the root path
+app.get("/", (req, res) => {
+  res.sendFile(path.join(buildDir, "index.html"));
 });
 
+// 5) Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`API server listening on port ${PORT}`);
+  console.log(`API + UI listening on port ${PORT}`);
 });
