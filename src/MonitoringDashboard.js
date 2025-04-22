@@ -23,19 +23,16 @@ const computers = [
   "LX-15-18460-23",
 ];
 
-// Your ngrok (or LAN) URL pointing at port 5000
-const STATUS_URL =
-  "https://98fa-2603-8000-cf01-26cc-437e-2c26-d244-622c.ngrok-free.app/api/status";
+// Use the same ngrok URL you’re tunneling port 5000 through:
+const STATUS_URL = "https://6de1-2603-8000-cf01-26cc-437e-2c26-d244-622c.ngrok-free.app/api/status";
 
 export default function MonitoringDashboard() {
-  // Initialize all PCs as offline (false) until we fetch real data
   const [pcStatus, setPcStatus] = useState(
     computers.reduce((acc, pc) => ({ ...acc, [pc]: false }), {})
   );
 
   useEffect(() => {
-    // Function to fetch the latest status map
-    const getStatus = async () => {
+    async function getStatus() {
       try {
         const res = await fetch(STATUS_URL);
         const data = await res.json();
@@ -44,17 +41,15 @@ export default function MonitoringDashboard() {
       } catch (err) {
         console.error("Failed to fetch PC status", err);
       }
-    };
-
-    // Fetch immediately, then every 5 seconds
+    }
     getStatus();
-    const interval = setInterval(getStatus, 5000);
-    return () => clearInterval(interval);
+    const iv = setInterval(getStatus, 5000);
+    return () => clearInterval(iv);
   }, []);
 
   return (
     <div className="p-6 grid grid-cols-3 gap-4">
-      {computers.map((pc) => (
+      {computers.map(pc => (
         <Card key={pc} className="p-4 flex items-center gap-4 shadow-lg">
           {pcStatus[pc] ? (
             <CheckCircle className="text-green-500" size={24} />
@@ -63,11 +58,7 @@ export default function MonitoringDashboard() {
           )}
           <CardContent>
             <h2 className="text-lg font-semibold">{pc}</h2>
-            <p
-              className={`text-sm ${
-                pcStatus[pc] ? "text-green-500" : "text-red-500"
-              }`}
-            >
+            <p className={`text-sm ${pcStatus[pc] ? "text-green-500" : "text-red-500"}`}>
               {pcStatus[pc] ? "Online" : "Offline"}
             </p>
           </CardContent>
