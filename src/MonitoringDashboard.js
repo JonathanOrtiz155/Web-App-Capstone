@@ -4,7 +4,7 @@ import CardContent from "@mui/material/CardContent";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 
 // Use the exact tunnel URL (no trailing spaces!)
-const NGROK_URL = "https://dceb-2603-8000-cf01-26cc-437e-2c26-d244-622c.ngrok-free.app";
+const NGROK_URL = "https://8ce9-2603-8000-cf01-26cc-437e-2c26-d244-622c.ngrok-free.app";
 console.log("STATUS_URL is:", NGROK_URL + "/api/status");
 
 const computers = [
