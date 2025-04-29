@@ -49,7 +49,7 @@ app.get("/api/status", (req, res) => {
   const status = {};
   for (const pcId of computers) {
     const last = lastSeen[pcId] || 0;
-    status[pcId] = now - last < 3 * 60 * 1000;
+    status[pcId] = now - last < 10 * 1000;
   }
   res.json(status);
 });
