@@ -12,19 +12,17 @@ import sgMail from "@sendgrid/mail";
 dotenv.config();
 
 const {
-  OFFLINE_THRESHOLD_MS = "10000",      // default to 10 seconds
+  OFFLINE_THRESHOLD_MS = "10000",      // 10 seconds for demo
   SENDGRID_API_KEY,
   SENDGRID_FROM_EMAIL,
   ALERT_TO_EMAIL
 } = process.env;
 
-// Validate required vars
 if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL || !ALERT_TO_EMAIL) {
   console.error("Missing SendGrid configuration in .env");
   process.exit(1);
 }
 
-// Configure SendGrid
 sgMail.setApiKey(SENDGRID_API_KEY);
 
 //
@@ -63,16 +61,37 @@ const lastSeen = {};   // { pcId: timestamp }
 const alerted = {};    // { pcId: boolean }
 
 //
-// 4) Heartbeat endpoint
+// 4) Heartbeat endpoint (with recovery email)
 //
 app.post("/api/heartbeat", (req, res) => {
   const { pcId } = req.body;
-  console.log("Heartbeat received for:", pcId);
   if (!pcId) {
     return res.status(400).json({ error: "Missing pcId" });
   }
-  lastSeen[pcId] = Date.now();
-  alerted[pcId] = false;  // reset any prior alert
+
+  const now = Date.now();
+  const wasOffline = alerted[pcId] === true;
+  lastSeen[pcId] = now;
+  alerted[pcId] = false;  // clear the offline flag
+
+  if (wasOffline) {
+    const recoveryTime = new Date(now).toLocaleTimeString();
+    const subject = `✅ RECOVERY: ${pcId} is back online`;
+    const textBody = `${pcId} came back online at ${recoveryTime}.`;
+    const htmlBody = `<p><strong>${pcId}</strong> came back online at ${recoveryTime}.</p>`;
+
+    sgMail
+      .send({
+        to: ALERT_TO_EMAIL,
+        from: SENDGRID_FROM_EMAIL,
+        subject,
+        text: textBody,
+        html: htmlBody,
+      })
+      .then(() => console.log("Recovery email sent for", pcId))
+      .catch((err) => console.error("Error sending recovery email:", err));
+  }
+
   res.sendStatus(200);
 });
 
@@ -106,24 +125,21 @@ setInterval(() => {
     if (isOffline && !alerted[pcId]) {
       alerted[pcId] = true;
 
-      // Customize subject and body here:
       const wentOfflineAt = new Date(last).toLocaleTimeString();
       const subject = `🚨 ALERT: ${pcId} went offline`;
       const textBody = `${pcId} went offline at ${wentOfflineAt}.`;
       const htmlBody = `<p><strong>${pcId}</strong> went offline at ${wentOfflineAt}.</p>`;
 
-      const msg = {
-        to: ALERT_TO_EMAIL,
-        from: SENDGRID_FROM_EMAIL,
-        subject,
-        text: textBody,
-        html: htmlBody,
-      };
-
       sgMail
-        .send(msg)
-        .then(() => console.log("Email alert sent for", pcId))
-        .catch((err) => console.error("Error sending email for", pcId, err));
+        .send({
+          to: ALERT_TO_EMAIL,
+          from: SENDGRID_FROM_EMAIL,
+          subject,
+          text: textBody,
+          html: htmlBody,
+        })
+        .then(() => console.log("Offline email sent for", pcId))
+        .catch((err) => console.error("Error sending offline email:", err));
     }
   }
 }, thresholdMs);
@@ -134,7 +150,7 @@ setInterval(() => {
 const buildDir = path.join(__dirname, "build");
 app.use(express.static(buildDir));
 
-// Fallback to index.html on root
+// Serve the React app at root
 app.get("/", (req, res) => {
   res.sendFile(path.join(buildDir, "index.html"));
 });
