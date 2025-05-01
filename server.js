@@ -3,7 +3,33 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+import sgMail from "@sendgrid/mail";
 
+//
+// 1) Load environment variables
+//
+dotenv.config();
+
+const {
+  OFFLINE_THRESHOLD_MS = "10000",      // default to 10 seconds
+  SENDGRID_API_KEY,
+  SENDGRID_FROM_EMAIL,
+  ALERT_TO_EMAIL
+} = process.env;
+
+// Validate required vars
+if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL || !ALERT_TO_EMAIL) {
+  console.error("Missing SendGrid configuration in .env");
+  process.exit(1);
+}
+
+// Configure SendGrid
+sgMail.setApiKey(SENDGRID_API_KEY);
+
+//
+// 2) Express setup
+//
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -11,7 +37,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Your 15 PC IDs
+//
+// 3) Application state
+//
 const computers = [
   "N-6-20437-20A",
   "LX-01-18480-23",
@@ -28,42 +56,92 @@ const computers = [
   "LX-12-18462-23",
   "LX-13-18463-23",
   "LX-14-18464-23",
-  "LX-15-18460-23",
+  "LX-15-18460-23"
 ];
 
-// In‑memory heartbeat store
-const lastSeen = {};
+const lastSeen = {};   // { pcId: timestamp }
+const alerted = {};    // { pcId: boolean }
 
-// 1) POST /api/heartbeat
+//
+// 4) Heartbeat endpoint
+//
 app.post("/api/heartbeat", (req, res) => {
   const { pcId } = req.body;
   console.log("Heartbeat received for:", pcId);
-  if (!pcId) return res.status(400).json({ error: "Missing pcId" });
+  if (!pcId) {
+    return res.status(400).json({ error: "Missing pcId" });
+  }
   lastSeen[pcId] = Date.now();
+  alerted[pcId] = false;  // reset any prior alert
   res.sendStatus(200);
 });
 
-// 2) GET /api/status
+//
+// 5) Status endpoint
+//
 app.get("/api/status", (req, res) => {
   const now = Date.now();
+  const threshold = parseInt(OFFLINE_THRESHOLD_MS, 10);
   const status = {};
+
   for (const pcId of computers) {
     const last = lastSeen[pcId] || 0;
-    status[pcId] = now - last < 10 * 1000;
+    status[pcId] = now - last < threshold;
   }
+
   res.json(status);
 });
 
-// 3) Serve React build folder
+//
+// 6) Offline scanner & email alerts
+//
+const thresholdMs = parseInt(OFFLINE_THRESHOLD_MS, 10);
+setInterval(() => {
+  const now = Date.now();
+
+  for (const pcId of computers) {
+    const last = lastSeen[pcId] || 0;
+    const isOffline = now - last >= thresholdMs;
+
+    if (isOffline && !alerted[pcId]) {
+      alerted[pcId] = true;
+
+      // Customize subject and body here:
+      const wentOfflineAt = new Date(last).toLocaleTimeString();
+      const subject = `🚨 ALERT: ${pcId} went offline`;
+      const textBody = `${pcId} went offline at ${wentOfflineAt}.`;
+      const htmlBody = `<p><strong>${pcId}</strong> went offline at ${wentOfflineAt}.</p>`;
+
+      const msg = {
+        to: ALERT_TO_EMAIL,
+        from: SENDGRID_FROM_EMAIL,
+        subject,
+        text: textBody,
+        html: htmlBody,
+      };
+
+      sgMail
+        .send(msg)
+        .then(() => console.log("Email alert sent for", pcId))
+        .catch((err) => console.error("Error sending email for", pcId, err));
+    }
+  }
+}, thresholdMs);
+
+//
+// 7) Serve React build
+//
 const buildDir = path.join(__dirname, "build");
 app.use(express.static(buildDir));
 
-// 4) Serve index.html on the root path
+// Fallback to index.html on root
 app.get("/", (req, res) => {
   res.sendFile(path.join(buildDir, "index.html"));
 });
 
-// 5) Start the server
+//
+// 8) Start the server
+//
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`API + UI listening on port ${PORT}`);
