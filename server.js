@@ -6,13 +6,13 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import sgMail from "@sendgrid/mail";
 
-//
-// 1) Load environment variables
-//
+
+//  Load environment variables
+
 dotenv.config();
 
 const {
-  OFFLINE_THRESHOLD_MS = "10000",      // 10 seconds for demo
+  OFFLINE_THRESHOLD_MS = "10000",      // 10 sec for demo
   SENDGRID_API_KEY,
   SENDGRID_FROM_EMAIL,
   ALERT_TO_EMAIL
@@ -25,9 +25,9 @@ if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL || !ALERT_TO_EMAIL) {
 
 sgMail.setApiKey(SENDGRID_API_KEY);
 
-//
-// 2) Express setup
-//
+
+//  Express setup
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -35,9 +35,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-//
-// 3) Application state
-//
+
+//  Application state
+
 const computers = [
   "N-6-20437-20A",
   "LX-01-18480-23",
@@ -60,9 +60,9 @@ const computers = [
 const lastSeen = {};   // { pcId: timestamp }
 const alerted = {};    // { pcId: boolean }
 
-//
-// 4) Heartbeat endpoint (with recovery email)
-//
+
+//  Heartbeat endpoint (with recovery email)
+
 app.post("/api/heartbeat", (req, res) => {
   const { pcId } = req.body;
   if (!pcId) {
@@ -95,9 +95,9 @@ app.post("/api/heartbeat", (req, res) => {
   res.sendStatus(200);
 });
 
-//
-// 5) Status endpoint
-//
+
+//  Status endpoint
+
 app.get("/api/status", (req, res) => {
   const now = Date.now();
   const threshold = parseInt(OFFLINE_THRESHOLD_MS, 10);
@@ -111,9 +111,9 @@ app.get("/api/status", (req, res) => {
   res.json(status);
 });
 
-//
-// 6) Offline scanner & email alerts
-//
+
+//  Offline scanner & email alerts
+
 const thresholdMs = parseInt(OFFLINE_THRESHOLD_MS, 10);
 setInterval(() => {
   const now = Date.now();
@@ -144,9 +144,9 @@ setInterval(() => {
   }
 }, thresholdMs);
 
-//
-// 7) Serve React build
-//
+
+//  Serve React build
+
 const buildDir = path.join(__dirname, "build");
 app.use(express.static(buildDir));
 
@@ -155,9 +155,9 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(buildDir, "index.html"));
 });
 
-//
-// 8) Start the server
-//
+
+//  Start the server
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`API + UI listening on port ${PORT}`);
