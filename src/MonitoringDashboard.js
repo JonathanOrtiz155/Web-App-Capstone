@@ -3,11 +3,7 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 
-// Replace this with your ngrok HTTPS forwarding URL exactly, no trailing spaces:
-const STATUS_URL = "/api/status";
-
-console.log("STATUS_URL is:", STATUS_URL);
-
+// List of all 15 PC identifiers
 const computers = [
   "N-6-20437-20A",
   "LX-01-18480-23",
@@ -33,16 +29,14 @@ export default function MonitoringDashboard() {
   );
 
   useEffect(() => {
+    const STATUS_URL = "/api/status"; // or your full ngrok URL if running standalone
     async function getStatus() {
-      console.log("Fetching", STATUS_URL);
       try {
-        const res = await fetch(STATUS_URL);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch(STATUS_URL, { cache: "no-store" });
         const data = await res.json();
-        console.log("fetched status:", data);
         setPcStatus(data);
       } catch (err) {
-        console.error("Failed to fetch PC status:", err);
+        console.error("Failed to fetch PC status", err);
       }
     }
     getStatus();
@@ -51,7 +45,10 @@ export default function MonitoringDashboard() {
   }, []);
 
   return (
-    <div className="p-6 grid grid-cols-3 gap-4">
+    <div
+      className="p-6 grid grid-cols-2 gap-4"
+      style={{ maxHeight: "100vh", overflowY: "auto" }}
+    >
       {computers.map((pc) => (
         <Card key={pc} className="p-4 flex items-center gap-4 shadow-lg">
           {pcStatus[pc] ? (
@@ -61,7 +58,11 @@ export default function MonitoringDashboard() {
           )}
           <CardContent>
             <h2 className="text-lg font-semibold">{pc}</h2>
-            <p className={`text-sm ${pcStatus[pc] ? "text-green-500" : "text-red-500"}`}>
+            <p
+              className={`text-sm ${
+                pcStatus[pc] ? "text-green-500" : "text-red-500"
+              }`}
+            >
               {pcStatus[pc] ? "Online" : "Offline"}
             </p>
           </CardContent>
