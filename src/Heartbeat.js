@@ -6,7 +6,7 @@ function Heartbeat() {
   useEffect(() => {
     const sendHeartbeat = async () => {
       try {
-        await fetch('https://d84d-209-129-115-57.ngrok-free.app/api/heartbeat', {
+        await fetch('https://b867-209-129-115-57.ngrok-free.app/api/heartbeat', {
           method: 'POST',
           body: JSON.stringify({ pcId: 'N-6-20437-20A' }),
           headers: { 'Content-Type': 'application/json' },

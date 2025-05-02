@@ -2,7 +2,7 @@
 import fetch from "node-fetch";
 
 const PC_ID = "N-6-20437-20A";
-const BASE = "https://d84d-209-129-115-57.ngrok-free.app";
+const BASE = "https://b867-209-129-115-57.ngrok-free.app";
 const BACKEND_URL = `${BASE}/api/heartbeat`;
 
 async function sendHeartbeat() {
