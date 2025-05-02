@@ -6,28 +6,45 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import sgMail from "@sendgrid/mail";
 
-
-//  Load environment variables
-
+//
+// 1) Load environment variables
+//
 dotenv.config();
 
+//
+// 2) Destructure env vars
+//
 const {
-  OFFLINE_THRESHOLD_MS = "10000",      // 10 sec for demo
+  OFFLINE_THRESHOLD_MS = "10000",    // 10 seconds for demo
   SENDGRID_API_KEY,
   SENDGRID_FROM_EMAIL,
   ALERT_TO_EMAIL
 } = process.env;
 
+//
+// 3) Debug-log loaded values
+//
+console.log("→ OFFLINE_THRESHOLD_MS =", OFFLINE_THRESHOLD_MS);
+console.log("→ SENDGRID_API_KEY prefix =", SENDGRID_API_KEY?.slice(0, 4), "…");
+console.log("→ SENDGRID_FROM_EMAIL =", SENDGRID_FROM_EMAIL);
+console.log("→ ALERT_TO_EMAIL =", ALERT_TO_EMAIL);
+
+//
+// 4) Validate required settings
+//
 if (!SENDGRID_API_KEY || !SENDGRID_FROM_EMAIL || !ALERT_TO_EMAIL) {
   console.error("Missing SendGrid configuration in .env");
   process.exit(1);
 }
 
+//
+// 5) Configure SendGrid
+//
 sgMail.setApiKey(SENDGRID_API_KEY);
 
-
-//  Express setup
-
+//
+// 6) Express setup
+//
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -35,9 +52,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
-//  Application state
-
+//
+// 7) Application state
+//
 const computers = [
   "N-6-20437-20A",
   "LX-01-18480-23",
@@ -60,9 +77,9 @@ const computers = [
 const lastSeen = {};   // { pcId: timestamp }
 const alerted = {};    // { pcId: boolean }
 
-
-//  Heartbeat endpoint (with recovery email)
-
+//
+// 8) Heartbeat endpoint (with recovery email)
+//
 app.post("/api/heartbeat", (req, res) => {
   const { pcId } = req.body;
   if (!pcId) {
@@ -89,15 +106,18 @@ app.post("/api/heartbeat", (req, res) => {
         html: htmlBody,
       })
       .then(() => console.log("Recovery email sent for", pcId))
-      .catch((err) => console.error("Error sending recovery email:", err));
+      .catch((err) => {
+        console.error("SendGrid error status:", err.code);
+        console.error("SendGrid error body:", err.response?.body);
+      });
   }
 
   res.sendStatus(200);
 });
 
-
-//  Status endpoint
-
+//
+// 9) Status endpoint
+//
 app.get("/api/status", (req, res) => {
   const now = Date.now();
   const threshold = parseInt(OFFLINE_THRESHOLD_MS, 10);
@@ -111,9 +131,9 @@ app.get("/api/status", (req, res) => {
   res.json(status);
 });
 
-
-//  Offline scanner & email alerts
-
+//
+// 10) Offline scanner & email alerts
+//
 const thresholdMs = parseInt(OFFLINE_THRESHOLD_MS, 10);
 setInterval(() => {
   const now = Date.now();
@@ -139,25 +159,26 @@ setInterval(() => {
           html: htmlBody,
         })
         .then(() => console.log("Offline email sent for", pcId))
-        .catch((err) => console.error("Error sending offline email:", err));
+        .catch((err) => {
+          console.error("SendGrid error status:", err.code);
+          console.error("SendGrid error body:", err.response?.body);
+        });
     }
   }
 }, thresholdMs);
 
-
-//  Serve React build
-
+//
+// 11) Serve React build
+//
 const buildDir = path.join(__dirname, "build");
 app.use(express.static(buildDir));
-
-// Serve the React app at root
 app.get("/", (req, res) => {
   res.sendFile(path.join(buildDir, "index.html"));
 });
 
-
-//  Start the server
-
+//
+// 12) Start the server
+//
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`API + UI listening on port ${PORT}`);
