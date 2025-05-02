@@ -1,6 +1,8 @@
 import React from 'react';
 import './Sidebar.css'; // Optional CSS file for styling
 
+/*
+
 function Sidebar() {
   return (
     <nav className="sidebar-container">
@@ -13,5 +15,7 @@ function Sidebar() {
     </nav>
   );
 }
+
+*/
 
 export default Sidebar;
